@@ -79,6 +79,36 @@ class NetGsmMessageTest extends TestCase
     }
 
     #[Test]
+    public function it_sends_a_different_text_to_each_recipient(): void
+    {
+        $message = (new NetGsmSmsMessage('Default text'))
+            ->setRecipients('5051234567')
+            ->addMessage('5441234568', 'Hello Ayşe')
+            ->addMessage(5321234567, 'Hello Mehmet');
+
+        $this->assertSame(['5051234567', '5441234568', '5321234567'], $message->getRecipients());
+        $this->assertSame([
+            ['msg' => 'Default text', 'no' => '5051234567'],
+            ['msg' => 'Hello Ayşe', 'no' => '5441234568'],
+            ['msg' => 'Hello Mehmet', 'no' => '5321234567'],
+        ], $message->body()['messages']);
+    }
+
+    #[Test]
+    public function adding_a_message_for_an_existing_recipient_overrides_its_text(): void
+    {
+        $message = (new NetGsmSmsMessage('Default text'))
+            ->setRecipients(['5051234567', '5441234568'])
+            ->addMessage('5051234567', 'Personal text');
+
+        $this->assertSame(['5051234567', '5441234568'], $message->getRecipients());
+        $this->assertSame([
+            '5051234567' => 'Personal text',
+            '5441234568' => 'Default text',
+        ], $message->getMessages());
+    }
+
+    #[Test]
     public function it_builds_the_otp_payload_for_a_single_recipient(): void
     {
         $message = (new NetGsmOtpMessage('Code: 1234'))

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.1.0] - 2026-10-06
+
+### Added
+
+- `NetGsmSmsMessage::addMessage($recipient, $text)` sends a different text to each recipient in a single
+  request (n:n). Recipients without their own text receive the default message.
+- `NetGsmSmsMessage::getMessages()` returns the recipient => text pairs that will be sent.
+
+### Changed
+
+- README rewritten: quick start, configuration reference, per-recipient messages, status/operator/result code
+  tables, testing guide, API reference, troubleshooting and an upgrade table.
+
 ## [5.0.0] - 2026-10-06
 
 This release moves the package to NetGsm's REST v2 API and modern Laravel. It contains breaking changes,
@@ -116,5 +129,6 @@ see [Upgrading from 4.x](README.md#upgrading-from-4x).
 
 - Initial release.
 
-[Unreleased]: https://github.com/siberfx/netgsm/compare/5.0.0...HEAD
+[Unreleased]: https://github.com/siberfx/netgsm/compare/5.1.0...HEAD
+[5.1.0]: https://github.com/siberfx/netgsm/compare/5.0.0...5.1.0
 [5.0.0]: https://github.com/siberfx/netgsm/releases/tag/5.0.0

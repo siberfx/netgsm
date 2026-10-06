@@ -41,6 +41,13 @@ class NetGsmSmsMessage extends AbstractNetGsmMessage
 
     protected ?string $partnerCode = null;
 
+    /**
+     * Per recipient message texts.
+     *
+     * @var array<array-key, string>
+     */
+    protected array $messages = [];
+
     public function setStartDate(?DateTimeInterface $startDate): static
     {
         $this->startDate = $startDate;
@@ -97,8 +104,47 @@ class NetGsmSmsMessage extends AbstractNetGsmMessage
         return $this->partnerCode ?? $this->defaults['partner_code'] ?? null;
     }
 
+    /**
+     * Adds a recipient with its own message text (n:n sending in a single request).
+     * Recipients without their own text receive the default message.
+     */
+    public function addMessage(string|int $recipient, string $message): static
+    {
+        $recipient = trim((string) $recipient);
+
+        $this->messages[$recipient] = $message;
+
+        if (! in_array($recipient, $this->recipients, true)) {
+            $this->recipients[] = $recipient;
+        }
+
+        return $this;
+    }
+
+    /**
+     * Returns the recipient => text pairs that will be sent.
+     *
+     * @return array<array-key, string>
+     */
+    public function getMessages(): array
+    {
+        $messages = [];
+
+        foreach ($this->recipients as $recipient) {
+            $messages[$recipient] = $this->messages[$recipient] ?? (string) $this->message;
+        }
+
+        return $messages;
+    }
+
     public function body(): array
     {
+        $messages = [];
+
+        foreach ($this->getMessages() as $recipient => $text) {
+            $messages[] = ['msg' => $text, 'no' => (string) $recipient];
+        }
+
         return array_filter([
             'msgheader' => $this->getHeader(),
             'encoding' => $this->getEncoding(),
@@ -106,10 +152,7 @@ class NetGsmSmsMessage extends AbstractNetGsmMessage
             'partnercode' => $this->getPartnerCode(),
             'startdate' => $this->startDate?->format('dmYHi'),
             'stopdate' => $this->endDate?->format('dmYHi'),
-            'messages' => array_map(
-                fn (string $recipient) => ['msg' => (string) $this->message, 'no' => $recipient],
-                $this->recipients,
-            ),
+            'messages' => $messages,
         ], fn ($value) => $value !== null && $value !== '');
     }
 }
