@@ -1,0 +1,67 @@
+{
+    "name": "siberfx/netgsm",
+    "description": "NetGsm SMS, OTP, reporting, balance and IYS integration for Laravel",
+    "keywords": [
+        "siberfx",
+        "netgsm",
+        "sms",
+        "otp",
+        "iys",
+        "laravel",
+        "notification-channel"
+    ],
+    "homepage": "https://github.com/siberfx/netgsm",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Selim Görmüş",
+            "email": "info@siberfx.com",
+            "role": "Lead Software Engineer"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "guzzlehttp/guzzle": "^7.9",
+        "illuminate/notifications": "^12.0|^13.0",
+        "illuminate/support": "^12.0|^13.0",
+        "illuminate/translation": "^12.0|^13.0"
+    },
+    "require-dev": {
+        "laravel/pint": "^1.24",
+        "mockery/mockery": "^1.6",
+        "orchestra/testbench": "^10.0|^11.0",
+        "phpunit/phpunit": "^11.5|^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Siberfx\\NetGsm\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Siberfx\\NetGsm\\Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit",
+        "test-coverage": "vendor/bin/phpunit --coverage-html coverage",
+        "lint": "vendor/bin/pint",
+        "lint:test": "vendor/bin/pint --test"
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Siberfx\\NetGsm\\NetGsmServiceProvider"
+            ],
+            "aliases": {
+                "NetGsm": "Siberfx\\NetGsm\\NetGsmFacade"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

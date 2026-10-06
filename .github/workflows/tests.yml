@@ -1,0 +1,56 @@
+name: tests
+
+on:
+    push:
+    pull_request:
+
+jobs:
+    lint:
+        runs-on: ubuntu-latest
+        name: Pint
+        steps:
+            -   uses: actions/checkout@v4
+
+            -   uses: shivammathur/setup-php@v2
+                with:
+                    php-version: 8.4
+                    coverage: none
+
+            -   run: composer update --no-interaction --no-progress --prefer-dist
+
+            -   run: vendor/bin/pint --test
+
+    test:
+        runs-on: ubuntu-latest
+        strategy:
+            fail-fast: true
+            matrix:
+                php: [8.4, 8.5]
+                laravel: [12, 13]
+                stability: [prefer-lowest, prefer-stable]
+                include:
+                    -   laravel: 12
+                        testbench: 10
+                    -   laravel: 13
+                        testbench: 11
+
+        name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }}
+
+        steps:
+            -   name: Checkout the code
+                uses: actions/checkout@v4
+
+            -   name: Setup PHP
+                uses: shivammathur/setup-php@v2
+                with:
+                    php-version: ${{ matrix.php }}
+                    extensions: json, mbstring
+                    coverage: none
+
+            -   name: Install dependencies
+                run: |
+                    composer require "illuminate/support:^${{ matrix.laravel }}.0" "orchestra/testbench:^${{ matrix.testbench }}.0" --no-interaction --no-update
+                    composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+
+            -   name: Execute tests
+                run: vendor/bin/phpunit --testdox --colors=always
