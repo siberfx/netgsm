@@ -34,7 +34,7 @@ abstract class TestCase extends Orchestra
     /**
      * Creates a NetGsm instance whose http client replies with the given responses.
      */
-    protected function netGsm(array $responses, array $defaults = []): NetGsm
+    protected function netGsm(array $responses, array $defaults = [], array $credentials = []): NetGsm
     {
         $this->mockHandler = new MockHandler(array_map(
             fn ($response) => $response instanceof Response ? $response : $this->jsonResponse($response),
@@ -49,11 +49,11 @@ abstract class TestCase extends Orchestra
             'base_uri' => 'https://api.netgsm.com.tr/',
         ]);
 
-        return new NetGsm($client, [
+        return new NetGsm($client, array_merge([
             'user_code' => 'user',
             'secret' => 'secret',
             'brand_code' => 'brand',
-        ], array_merge(['header' => 'DEFAULT'], $defaults));
+        ], $credentials), array_merge(['header' => 'DEFAULT'], $defaults));
     }
 
     protected function jsonResponse(array $body, int $status = 200): Response

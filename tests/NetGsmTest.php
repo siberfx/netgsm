@@ -1,9 +1,6 @@
 <?php
 
-namespace Siberfx\NetGsm\Tests;
-
 use GuzzleHttp\Psr7\Response;
-use PHPUnit\Framework\Attributes\Test;
 use Siberfx\NetGsm\Exceptions\CouldNotSendNotification;
 use Siberfx\NetGsm\Exceptions\IncorrectPhoneNumberFormatException;
 use Siberfx\NetGsm\Exceptions\NetGsmException;
@@ -12,122 +9,94 @@ use Siberfx\NetGsm\NetGsmFacade;
 use Siberfx\NetGsm\Sms\NetGsmOtpMessage;
 use Siberfx\NetGsm\Sms\NetGsmSmsMessage;
 
-class NetGsmTest extends TestCase
-{
-    #[Test]
-    public function it_sends_an_sms_via_rest_v2_and_returns_the_job_id(): void
-    {
-        $netgsm = $this->netGsm([['code' => '00', 'jobid' => '17377215342605050417149344', 'description' => 'queued']]);
+it('sends an sms via rest v2 and returns the job id', function () {
+    $netgsm = $this->netGsm([['code' => '00', 'jobid' => '17377215342605050417149344', 'description' => 'queued']]);
 
-        $jobId = $netgsm->sendSms((new NetGsmSmsMessage('Hello'))->setRecipients('5051234567'));
+    $jobId = $netgsm->sendSms((new NetGsmSmsMessage('Hello'))->setRecipients('5051234567'));
 
-        $this->assertSame('17377215342605050417149344', $jobId);
+    expect($jobId)->toBe('17377215342605050417149344');
 
-        $request = $this->request();
-        $this->assertSame('POST', $request->getMethod());
-        $this->assertSame('https://api.netgsm.com.tr/sms/rest/v2/send', (string) $request->getUri());
-        $this->assertSame('Basic '.base64_encode('user:secret'), $request->getHeaderLine('Authorization'));
-        $this->assertStringContainsString('application/json', $request->getHeaderLine('Content-Type'));
-        $this->assertSame([
-            'msgheader' => 'DEFAULT',
-            'messages' => [['msg' => 'Hello', 'no' => '5051234567']],
-        ], $this->requestBody());
-    }
+    $request = $this->request();
+    expect($request->getMethod())->toBe('POST');
+    expect((string) $request->getUri())->toBe('https://api.netgsm.com.tr/sms/rest/v2/send');
+    expect($request->getHeaderLine('Authorization'))->toBe('Basic '.base64_encode('user:secret'));
+    expect($request->getHeaderLine('Content-Type'))->toContain('application/json');
+    expect($this->requestBody())->toBe([
+        'msgheader' => 'DEFAULT',
+        'messages' => [['msg' => 'Hello', 'no' => '5051234567']],
+    ]);
+});
 
-    #[Test]
-    public function it_applies_config_defaults_to_the_payload(): void
-    {
-        $netgsm = $this->netGsm([['code' => '00', 'jobid' => '1']], ['encoding' => 'TR', 'appname' => 'my-app']);
+it('applies config defaults to the payload', function () {
+    $netgsm = $this->netGsm([['code' => '00', 'jobid' => '1']], ['encoding' => 'TR', 'appname' => 'my-app']);
 
-        $netgsm->sendSms((new NetGsmSmsMessage('Şükran'))->setRecipients('5051234567'));
+    $netgsm->sendSms((new NetGsmSmsMessage('Şükran'))->setRecipients('5051234567'));
 
-        $body = $this->requestBody();
-        $this->assertSame('TR', $body['encoding']);
-        $this->assertSame('my-app', $body['appname']);
-    }
+    expect($this->requestBody())
+        ->encoding->toBe('TR')
+        ->appname->toBe('my-app');
+});
 
-    #[Test]
-    public function it_sends_an_otp_message(): void
-    {
-        $netgsm = $this->netGsm([['code' => '00', 'jobId' => '123456', 'description' => 'queued']]);
+it('sends an otp message', function () {
+    $netgsm = $this->netGsm([['code' => '00', 'jobId' => '123456', 'description' => 'queued']]);
 
-        $jobId = $netgsm->sendSms((new NetGsmOtpMessage('Code: 1234'))->setRecipients('5051234567'));
+    $jobId = $netgsm->sendSms((new NetGsmOtpMessage('Code: 1234'))->setRecipients('5051234567'));
 
-        $this->assertSame('123456', $jobId);
-        $this->assertSame('/sms/rest/v2/otp', $this->request()->getUri()->getPath());
-        $this->assertSame(['msgheader' => 'DEFAULT', 'msg' => 'Code: 1234', 'no' => '5051234567'], $this->requestBody());
-    }
+    expect($jobId)->toBe('123456');
+    expect($this->request()->getUri()->getPath())->toBe('/sms/rest/v2/otp');
+    expect($this->requestBody())->toBe(['msgheader' => 'DEFAULT', 'msg' => 'Code: 1234', 'no' => '5051234567']);
+});
 
-    #[Test]
-    public function it_throws_a_translated_exception_for_netgsm_error_codes(): void
-    {
-        $netgsm = $this->netGsm([$this->jsonResponse(['code' => '40', 'description' => 'invalid header'], 406)]);
+it('throws a translated exception for netgsm error codes', function () {
+    $netgsm = $this->netGsm([$this->jsonResponse(['code' => '40', 'description' => 'invalid header'], 406)]);
 
-        try {
-            $netgsm->sendSms((new NetGsmSmsMessage('Hello'))->setRecipients('5051234567'));
-            $this->fail('Exception was not thrown.');
-        } catch (CouldNotSendNotification $exception) {
-            $this->assertSame(40, $exception->getCode());
-            $this->assertSame('Message title (sender name) is not defined in system', $exception->getMessage());
-        }
-    }
+    expect(fn () => $netgsm->sendSms((new NetGsmSmsMessage('Hello'))->setRecipients('5051234567')))
+        ->toThrow(function (CouldNotSendNotification $exception) {
+            expect($exception->getCode())->toBe(40);
+            expect($exception->getMessage())->toBe('Message title (sender name) is not defined in system');
+        });
+});
 
-    #[Test]
-    public function it_throws_when_the_job_id_is_missing(): void
-    {
-        $netgsm = $this->netGsm([['code' => '00']]);
+it('throws when the job id is missing', function () {
+    $netgsm = $this->netGsm([['code' => '00']]);
 
-        $this->expectException(NetGsmException::class);
+    expect(fn () => $netgsm->sendSms((new NetGsmSmsMessage('Hello'))->setRecipients('5051234567')))
+        ->toThrow(NetGsmException::class);
+});
 
-        $netgsm->sendSms((new NetGsmSmsMessage('Hello'))->setRecipients('5051234567'));
-    }
+it('throws when the response is not json', function () {
+    $netgsm = $this->netGsm([new Response(200, [], '30')]);
 
-    #[Test]
-    public function it_throws_when_the_response_is_not_json(): void
-    {
-        $netgsm = $this->netGsm([new Response(200, [], '30')]);
+    expect(fn () => $netgsm->sendSms((new NetGsmSmsMessage('Hello'))->setRecipients('5051234567')))
+        ->toThrow(NetGsmException::class);
+});
 
-        $this->expectException(NetGsmException::class);
+it('validates recipients before sending', function () {
+    $netgsm = $this->netGsm([]);
 
-        $netgsm->sendSms((new NetGsmSmsMessage('Hello'))->setRecipients('5051234567'));
-    }
+    expect(fn () => $netgsm->sendSms((new NetGsmSmsMessage('Hello'))->setRecipients('12345')))
+        ->toThrow(IncorrectPhoneNumberFormatException::class);
+});
 
-    #[Test]
-    public function it_validates_recipients_before_sending(): void
-    {
-        $netgsm = $this->netGsm([]);
+it('cancels a scheduled job', function () {
+    $netgsm = $this->netGsm([['code' => '00', 'jobid' => '42', 'description' => 'cancelled']]);
 
-        $this->expectException(IncorrectPhoneNumberFormatException::class);
+    expect($netgsm->cancel('42'))->toBeTrue();
+    expect($this->request()->getUri()->getPath())->toBe('/sms/rest/v2/cancel');
+    expect($this->requestBody())->toBe(['jobid' => '42']);
+});
 
-        $netgsm->sendSms((new NetGsmSmsMessage('Hello'))->setRecipients('12345'));
-    }
+it('lists sender headers', function () {
+    $netgsm = $this->netGsm([['code' => '00', 'msgheaders' => ['COMPANY', 'BRAND']]]);
 
-    #[Test]
-    public function it_cancels_a_scheduled_job(): void
-    {
-        $netgsm = $this->netGsm([['code' => '00', 'jobid' => '42', 'description' => 'cancelled']]);
+    expect($netgsm->getHeaders())->toBe(['COMPANY', 'BRAND']);
+    expect($this->request()->getMethod())->toBe('GET');
+    expect($this->request()->getUri()->getPath())->toBe('/sms/rest/v2/msgheader');
+});
 
-        $this->assertTrue($netgsm->cancel('42'));
-        $this->assertSame('/sms/rest/v2/cancel', $this->request()->getUri()->getPath());
-        $this->assertSame(['jobid' => '42'], $this->requestBody());
-    }
+it('is resolvable from the container and facade', function () {
+    $this->app['config']->set('netgsm.credentials.user_code', 'user');
 
-    #[Test]
-    public function it_lists_sender_headers(): void
-    {
-        $netgsm = $this->netGsm([['code' => '00', 'msgheaders' => ['COMPANY', 'BRAND']]]);
-
-        $this->assertSame(['COMPANY', 'BRAND'], $netgsm->getHeaders());
-        $this->assertSame('GET', $this->request()->getMethod());
-        $this->assertSame('/sms/rest/v2/msgheader', $this->request()->getUri()->getPath());
-    }
-
-    #[Test]
-    public function it_is_resolvable_from_the_container_and_facade(): void
-    {
-        $this->app['config']->set('netgsm.credentials.user_code', 'user');
-
-        $this->assertInstanceOf(NetGsm::class, $this->app->make(NetGsm::class));
-        $this->assertInstanceOf(NetGsm::class, NetGsmFacade::getFacadeRoot());
-    }
-}
+    expect($this->app->make(NetGsm::class))->toBeInstanceOf(NetGsm::class);
+    expect(NetGsmFacade::getFacadeRoot())->toBeInstanceOf(NetGsm::class);
+});

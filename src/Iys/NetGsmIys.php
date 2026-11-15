@@ -30,4 +30,14 @@ class NetGsmIys extends AbstractNetGsmIys
 
         return $this;
     }
+
+    /**
+     * Sets the URL NetGsm posts İYS consent results to. Sends the request immediately and returns the response.
+     *
+     * @return array<string, mixed>
+     */
+    public function setWebhook(string $webhookUrl): array
+    {
+        return $this->postJson('iys/webhook', ['webhookUrl' => $webhookUrl]);
+    }
 }

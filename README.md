@@ -27,9 +27,9 @@
 
 ## Requirements
 
-| Package | PHP        | Laravel    |
-|---------|------------|------------|
-| `^5.0`  | 8.4, 8.5   | 12.x, 13.x |
+| Package | PHP             | Laravel    |
+|---------|-----------------|------------|
+| `^5.0`  | 8.3, 8.4, 8.5   | 12.x, 13.x |
 
 You also need a NetGsm account with an **API user** (created in the NetGsm panel)
 and at least one approved sender name (*msgheader*).
@@ -231,6 +231,17 @@ NetGsm::cancel($jobId);   // true. Only scheduled messages that haven't been sen
 NetGsm::getHeaders();     // ['COMPANY', 'BRAND']
 ```
 
+### Incoming SMS and blacklist
+
+```php
+// Messages received between two dates. Returns the raw NetGsm response.
+NetGsm::getInbox(now()->subDay(), now());
+
+// Add one number or several to the SMS blacklist. Returns true on success.
+NetGsm::addToBlacklist('5051234567');
+NetGsm::addToBlacklist(['5051234567', '5059876543']);
+```
+
 ## Reports
 
 ```php
@@ -388,6 +399,13 @@ $search = (new Search)
 $response = NetGsm::iys()->searchAddress($search)->send();
 ```
 
+### Report webhook
+
+```php
+// Sets the URL NetGsm posts İYS results to. Sent immediately; returns the raw NetGsm response.
+NetGsm::iys()->setWebhook('https://example.com/netgsm/iys');
+```
+
 ## Error handling
 
 NetGsm result codes become exceptions with a translated message. `getCode()` returns the NetGsm code.
@@ -465,6 +483,8 @@ NetGsm::shouldReceive('sendSms')->once()->andReturn('123456');
 | `sendSms(AbstractNetGsmMessage $message)`               | `?string`          | Sends an SMS or OTP; returns job id |
 | `cancel(string $jobId)`                                 | `bool`             | Cancels a scheduled job             |
 | `getHeaders()`                                          | `string[]`         | Sender names on the account         |
+| `getInbox(DateTimeInterface $start, $end)`              | `array`            | Incoming SMS (raw response)         |
+| `addToBlacklist(string\|array $numbers)`                 | `bool`             | Adds numbers to the SMS blacklist   |
 | `getReports(AbstractNetGsmReport $report, ...)`         | `Collection`       | Delivery report rows                |
 | `getStats(string $jobId)`                               | `Collection`       | Statistics for one job              |
 | `getCredit()`                                           | `?string`          | Remaining credit (TL)               |
@@ -503,7 +523,7 @@ If you published the config file before, publish it again.
 
 ```bash
 composer install
-composer test        # PHPUnit
+composer test        # Pest
 composer lint        # fix code style with Laravel Pint
 composer lint:test   # check code style
 ```

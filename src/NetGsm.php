@@ -109,6 +109,32 @@ class NetGsm
     }
 
     /**
+     * Returns the incoming SMS received between the given dates (the raw NetGsm response).
+     *
+     * @return array<string, mixed>
+     *
+     * @throws AbstractNetGsmException
+     * @throws GuzzleException
+     */
+    public function getInbox(DateTimeInterface $startDate, DateTimeInterface $endDate): array
+    {
+        return $this->prepare(new NetGsmSmsOperations)->getInbox($startDate, $endDate);
+    }
+
+    /**
+     * Adds one or more phone numbers to the NetGsm SMS blacklist.
+     *
+     * @param  string|string[]  $numbers
+     *
+     * @throws AbstractNetGsmException
+     * @throws GuzzleException
+     */
+    public function addToBlacklist(string|array $numbers): bool
+    {
+        return $this->prepare(new NetGsmSmsOperations)->addToBlacklist((array) $numbers);
+    }
+
+    /**
      * Returns the remaining credit (TL) on the NetGsm account.
      *
      * @throws AbstractNetGsmException

@@ -73,6 +73,26 @@ class NetGsmApiClient
     }
 
     /**
+     * Sends an XML body to a NetGsm endpoint that expects XML (e.g. the blacklist). Credentials go in the body.
+     *
+     * @throws GuzzleException
+     * @throws NetGsmException
+     */
+    protected function callXmlApi(string $url, string $xml): array
+    {
+        $response = $this->client->request('POST', $url, [
+            'headers' => [
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/xml',
+            ],
+            'body' => $xml,
+            'http_errors' => false,
+        ]);
+
+        return $this->decode((string) $response->getBody());
+    }
+
+    /**
      * @throws NetGsmException
      */
     protected function decode(string $body): array

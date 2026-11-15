@@ -23,7 +23,7 @@ class NetGsmSmsStatsReport extends AbstractNetGsmReport
     {
         return array_filter([
             'jobid' => $this->bulkIds[0] ?? null,
-            'sendDate' => $this->startDate?->format('d.m.Y'),
+            'senddate' => $this->startDate?->format('d.m.Y'),
         ], fn ($value) => $value !== null);
     }
 

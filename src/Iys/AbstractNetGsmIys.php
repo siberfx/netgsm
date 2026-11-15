@@ -24,22 +24,33 @@ abstract class AbstractNetGsmIys extends NetGsmApiClient
      */
     public function send(): array
     {
+        return $this->postJson($this->url, ['data' => $this->body], $this->refId);
+    }
+
+    /**
+     * Posts a JSON body wrapped in the IYS header (username, password, brandCode, refid).
+     *
+     * @param  array<string, mixed>  $body
+     *
+     * @throws GuzzleException
+     * @throws NetGsmException
+     */
+    protected function postJson(string $url, array $body, ?string $refId = null): array
+    {
         $header = array_filter([
             'username' => $this->credentials['user_code'] ?? null,
             'password' => $this->credentials['secret'] ?? null,
             'brandCode' => $this->credentials['brand_code'] ?? null,
-            'refid' => $this->refId,
+            'refid' => $refId,
         ], fn ($value) => $value !== null);
 
-        $response = $this->client->request($this->method, $this->url, [
+        $response = $this->client->request($this->method, $url, [
             'headers' => [
                 'Accept' => 'application/json',
             ],
             'json' => [
                 'header' => $header,
-                'body' => [
-                    'data' => $this->body,
-                ],
+                'body' => $body,
             ],
             'http_errors' => false,
         ]);

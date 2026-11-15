@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.2.0] - 2026-11-16
+
+### Added
+
+- `NetGsm::getInbox($startDate, $endDate)` lists incoming SMS between two dates (`sms/rest/v2/inbox`). It returns the raw NetGsm response.
+- `NetGsm::addToBlacklist($numbers)` adds one or more numbers to the SMS blacklist (`sms/blacklist`).
+- `NetGsm::iys()->setWebhook($url)` sets the URL NetGsm posts İYS results to (`iys/webhook`).
+
+### Changed
+
+- PHP 8.3 is supported again (`composer.json` requires `^8.3`). CI tests PHP 8.3, 8.4 and 8.5.
+- The dependency lock file was regenerated for PHP 8.3. Some Symfony development packages moved from 8.x to 7.4, because 8.x requires PHP 8.4.
+- The test suite is written with Pest 4 (`pestphp/pest`, `pestphp/pest-plugin-laravel`). `composer test` runs `vendor/bin/pest`.
+
+### Fixed
+
+- `NetGsm::getStats()` with a start date now sends the `senddate` key, as in the NetGsm REST v2 examples. The previous `sendDate` key did not match them.
+
 ## [5.1.0] - 2026-10-06
 
 ### Added
